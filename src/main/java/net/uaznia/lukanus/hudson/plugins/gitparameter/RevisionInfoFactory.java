@@ -58,12 +58,13 @@ public class RevisionInfoFactory {
         }
 
         String authorLine = getAuthorLine(raw);
+        String subjectLine = getSubjectLine(raw);
         Matcher matcher = AUTHOR_LINE_PATTERN.matcher(authorLine);
         if (matcher.find()) {
             String author = matcher.group(1);
             String timestamp = matcher.group(2);
             DateTime date = new DateTime(Long.parseLong(timestamp) * 1000); //Convert UNIX timestamp to date
-            return revision.getSha1String().substring(0, 8) + " " + date.toString("yyyy:MM:dd HH:mm") + " " + author;
+            return revision.getSha1String().substring(0, 8) + " " + date.toString("yyyy:MM:dd HH:mm") + " " + author + subjectLine;
         } else {
             LOGGER.log(Level.WARNING, Messages.GitParameterDefinition_notFindAuthorPattern(authorLine));
             return "";
@@ -74,6 +75,16 @@ public class RevisionInfoFactory {
         for (String row : rows) {
             if (StringUtils.isNotEmpty(row) && row.toLowerCase().startsWith("author")) {
                 return row;
+            }
+        }
+        return "";
+    }
+    
+    private String getSubjectLine(List<String> rows) {
+        for (int i = 0; i < rows.size(); i++) {
+        	String row = rows.get(i);
+            if (StringUtils.isNotEmpty(row) && row.toLowerCase().startsWith("committer") && ((i+2) < rows.size())) {
+                return rows.get(i+2);
             }
         }
         return "";
